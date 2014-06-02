@@ -92,14 +92,11 @@ module Merger PileUpJetIDMissingET {
   set MomentumOutputArray momentum
 }  
 
-    
-
 module Merger EFlowChargedMerger {
   add InputArray TrackPileUpSubtractor/eflowTracks
   add InputArray MuonMomentumSmearing/muons
   set OutputArray eflowTracks
 }
-
 
 module RunPUPPI RunPUPPI {
 #  set TrackInputArray EFlowChargedMerger/eflowTracks
@@ -121,7 +118,7 @@ module FastJetFinder PuppiJetFinder {
   set JetPTMin 0.
 
   # remove pileup again (using it for synchronization)
-  set KeepPileUp 0
+#  set KeepPileUp 0
 }
 
 module FastJetFinder PuppiRho {
@@ -239,6 +236,9 @@ module ParticlePropagator ParticlePropagatorNoPU {
 
   # magnetic field
   set Bz 3.8
+
+  # remove pileup again (using it for synchronization)
+  set KeepPileUp 0
 }
 
 

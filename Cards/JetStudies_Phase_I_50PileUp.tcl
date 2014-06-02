@@ -196,7 +196,7 @@ module PileUpMerger PileUpMerger {
   set PileUpFile MinBias.pileup
 
   # average expected pile up
-  set MeanPileUp 140
+  set MeanPileUp 50
   # spread in the beam direction in m (assumes gaussian)
   set ZVertexSpread 0.053
 }
