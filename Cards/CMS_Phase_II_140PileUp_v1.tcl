@@ -519,7 +519,7 @@ module Isolation PhotonIsolation {
 
   set PTMin 1.0
 
-  set PTRatioMax 0.4
+  set PTRatioMax 9999.
 }
 
 #####################
@@ -574,7 +574,7 @@ module Isolation ElectronIsolation {
 
   set PTMin 1.0
 
-  set PTRatioMax 0.4
+  set PTRatioMax 9999.
 }
 
 #################
@@ -614,7 +614,7 @@ module Isolation MuonIsolation {
 
   set PTMin 1.0
 
-  set PTRatioMax 0.4
+  set PTRatioMax 9999.
 }
 
 ###################
