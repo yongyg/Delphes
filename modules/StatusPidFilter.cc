@@ -101,7 +101,7 @@ void StatusPidFilter::Process()
     // Gauge bosons and other fundamental bosons
     if(pdgCode > 22 && pdgCode < 43) pass = kTRUE;
 
-//    if(!pass || candidate->Momentum.Pt() <= fPTMin) continue;
+    if(!pass || candidate->Momentum.Pt() <= fPTMin) continue;
 
     if (status == 3) fOutputArray->Add(candidate);
   }

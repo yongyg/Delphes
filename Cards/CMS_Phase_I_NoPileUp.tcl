@@ -82,7 +82,7 @@ module StatusPidFilter StatusPid {
     set InputArray Delphes/allParticles
     set OutputArray filteredParticles
 
-    set PTMin 0.5
+    set PTMin 5.0
 }
 
 
@@ -386,7 +386,7 @@ module Isolation ElectronIsolation {
 
   set DeltaRMax 0.3
 
-  set PTMin 0.5
+  set PTMin 5.0
 
   set PTRatioMax 9999.
 }
@@ -423,7 +423,7 @@ module Isolation MuonIsolation {
 
   set DeltaRMax 0.3
 
-  set PTMin 0.5
+  set PTMin 5.0
 
   set PTRatioMax 9999.
 }
