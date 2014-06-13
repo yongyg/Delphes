@@ -275,7 +275,7 @@ module StatusPidFilter StatusPid {
 
     set OutputArray filteredParticles
 
-    set PTMin 5.0
+    set PTMin 1.0
 }
 
 # Saves a particle (or particles?) intended to represent the beamspot

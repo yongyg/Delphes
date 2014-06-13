@@ -103,7 +103,7 @@ void StatusPidFilter::Process()
 
     if(!pass || candidate->Momentum.Pt() <= fPTMin) continue;
 
-    if (status == 3) fOutputArray->Add(candidate);
+    fOutputArray->Add(candidate);
   }
 }
 
