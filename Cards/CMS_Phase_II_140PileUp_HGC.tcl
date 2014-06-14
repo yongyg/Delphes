@@ -613,7 +613,7 @@ module Isolation PhotonIsolation {
 
   set PTMin 1.0
 
-  set PTRatioMax 9999.
+  set PTRatioMax 0.4
 }
 
 #####################
@@ -668,7 +668,7 @@ module Isolation ElectronIsolation {
 
   set PTMin 1.0
 
-  set PTRatioMax 9999.
+  set PTRatioMax 0.4
 }
 
 #################
@@ -708,7 +708,7 @@ module Isolation MuonIsolation {
 
   set PTMin 1.0
 
-  set PTRatioMax 9999.
+  set PTRatioMax 0.4
 }
 
 ###################
@@ -894,7 +894,7 @@ module TreeWriter TreeWriter {
   add Branch Rho/rho Rho Rho
   add Branch PileUpMerger/NPU NPU ScalarHT
 
-  set OffsetFromModifyBeamSpot 1
+  set OffsetFromModifyBeamSpot 0
 }
 
 # # add Branch InputArray BranchName BranchClass

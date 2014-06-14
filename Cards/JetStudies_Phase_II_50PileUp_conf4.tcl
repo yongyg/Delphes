@@ -974,7 +974,7 @@ module Isolation PhotonIsolation {
 
   set PTMin 1.0
 
-  set PTRatioMax 9999.
+  set PTRatioMax 0.4
 }
 
 #####################
@@ -1029,7 +1029,7 @@ module Isolation ElectronIsolation {
 
   set PTMin 1.0
 
-  set PTRatioMax 9999.
+  set PTRatioMax 0.4
 }
 
 #################
@@ -1069,7 +1069,7 @@ module Isolation MuonIsolation {
 
   set PTMin 1.0
 
-  set PTRatioMax 9999.
+  set PTRatioMax 0.4
 }
 
 ###################
@@ -1282,7 +1282,7 @@ module TreeWriter TreeWriter {
 
   add Branch PuppiJetFinder/jets PuppiJet Jet
 
-  set OffsetFromModifyBeamSpot 1
+  set OffsetFromModifyBeamSpot 0
 
 #  add Branch RunPUPPI/weightedparticles PuppiWeightedParticles GenParticle
 #  add Branch Delphes/allParticles Particle GenParticle
