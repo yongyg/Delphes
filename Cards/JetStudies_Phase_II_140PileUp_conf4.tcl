@@ -910,7 +910,8 @@ module ConstituentFilter ConstituentFilter {
 
 # SZ changed this but it seems sensible
 #   add JetInputArray FastJetFinder/jets
-   add JetInputArray UniqueObjectFinderMJ/jets
+#   add JetInputArray UniqueObjectFinderMJ/jets
+  add JetInputArray JetPileUpSubtractor/jets
 
 #   add JetInputArray CAJetFinder/jets
 
@@ -1105,6 +1106,10 @@ module Merger ScalarHT {
   add InputArray UniqueObjectFinderEJ/electrons
   add InputArray UniqueObjectFinderGJ/photons
   add InputArray UniqueObjectFinderMJ/muons
+#  add InputArray JetPileUpSubtractor/jets
+#  add InputArray ElectronIsolation/electrons
+#  add InputArray PhotonIsolation/photons
+#  add InputArray MuonIsolation/muons
   set EnergyOutputArray energy
 }
 
@@ -1306,10 +1311,14 @@ module TreeWriter TreeWriter {
 
   add Branch GenJetFinder/jets GenJetWithNu Jet
   add Branch GenJetFinderNoNu/jets GenJet Jet
-  add Branch UniqueObjectFinderMJ/jets Jet Jet
-  add Branch UniqueObjectFinderEJ/electrons Electron Electron
-  add Branch UniqueObjectFinderGJ/photons Photon Photon
-  add Branch UniqueObjectFinderMJ/muons Muon Muon
+#  add Branch UniqueObjectFinderMJ/jets Jet Jet
+#  add Branch UniqueObjectFinderEJ/electrons Electron Electron
+#  add Branch UniqueObjectFinderGJ/photons Photon Photon
+#  add Branch UniqueObjectFinderMJ/muons Muon Muon
+  add Branch JetPileUpSubtractor/jets Jet Jet
+  add Branch ElectronIsolation/electrons Electron Electron
+  add Branch PhotonIsolation/photons Photon Photon
+  add Branch MuonIsolation/muons Muon Muon
 
   add Branch PileUpJetIDMissingET/momentum PileUpJetIDMissingET MissingET
   add Branch GenMissingET/momentum GenMissingET MissingET
