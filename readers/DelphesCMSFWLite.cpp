@@ -82,10 +82,23 @@ void ConvertInput(fwlite::Event &event, DelphesFactory *factory, TObjArray *allP
 
     candidate->Status = status;
 
+
+    //M1
+    if(particle.mother()){
+      itCandidate = find(vectorCandidate.begin(), vectorCandidate.end(), particle.mother());
+      if(itCandidate != vectorCandidate.end()) candidate->M1 = distance(vectorCandidate.begin(), itCandidate);
+    }
+
+    //D1
     itCandidate = find(vectorCandidate.begin(), vectorCandidate.end(), particle.daughter(0));
     if(itCandidate != vectorCandidate.end()) candidate->D1 = distance(vectorCandidate.begin(), itCandidate);
 
-    itCandidate = find(vectorCandidate.begin(), vectorCandidate.end(), particle.daughter(particle.numberOfDaughters() - 1));
+    //D2
+    if(particle.numberOfDaughters() > 1)
+      itCandidate = find(vectorCandidate.begin(), vectorCandidate.end(), particle.daughter(1));
+    else
+      itCandidate = find(vectorCandidate.begin(), vectorCandidate.end(), particle.daughter(particle.numberOfDaughters() - 1));
+
     if(itCandidate != vectorCandidate.end()) candidate->D2 = distance(vectorCandidate.begin(), itCandidate);
 
     pdgParticle = pdg->GetParticle(pid);
