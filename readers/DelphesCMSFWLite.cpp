@@ -35,93 +35,112 @@
 #include "DataFormats/FWLite/interface/Event.h"
 #include "DataFormats/FWLite/interface/Handle.h"
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
+#include "SimDataFormats/GeneratorProducts/interface/HepMCProduct.h"
+#include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
+
 
 using namespace std;
 
 //---------------------------------------------------------------------------
 
-void ConvertInput(fwlite::Event &event, DelphesFactory *factory, TObjArray *allParticleOutputArray, TObjArray *stableParticleOutputArray, TObjArray *partonOutputArray)
+void ConvertInput(fwlite::Event &event, Long64_t eventCounter, ExRootTreeBranch *branch, DelphesFactory *factory, TObjArray *allParticleOutputArray, TObjArray *stableParticleOutputArray, TObjArray *partonOutputArray)
 {
-  fwlite::Handle< vector< reco::GenParticle > > handleParticle;
-  vector< reco::GenParticle >::const_iterator itParticle;
+// event information
+    HepMCEvent *element;
 
-  vector< const reco::Candidate * > vectorCandidate;
-  vector< const reco::Candidate * >::iterator itCandidate;
+    fwlite::Handle<GenEventInfoProduct> genEvtInfo;
+    genEvtInfo.getByLabel(event, "generator");
 
-  handleParticle.getByLabel(event, "genParticles");
+    element = static_cast<HepMCEvent *>(branch->NewEntry());
 
-  Candidate *candidate;
-  TDatabasePDG *pdg;
-  TParticlePDG *pdgParticle;
-  Int_t pdgCode;
+    element->Number = eventCounter;
 
-  Int_t pid, status;
-  Double_t px, py, pz, e, mass;
-  Double_t x, y, z;
+    element->ProcessID = genEvtInfo->signalProcessID();
+    element->MPI = 1;
+    element->Weight = genEvtInfo->weights()[0];
+    element->Scale = genEvtInfo->qScale();
+    element->AlphaQED = genEvtInfo->alphaQED();
+    element->AlphaQCD = genEvtInfo->alphaQCD();
 
-  pdg = TDatabasePDG::Instance();
+    fwlite::Handle< vector< reco::GenParticle > > handleParticle;
+    vector< reco::GenParticle >::const_iterator itParticle;
 
-  for(itParticle = handleParticle->begin(); itParticle != handleParticle->end(); ++itParticle)
-  {
-    vectorCandidate.push_back(&*itParticle);
-  }
+    vector< const reco::Candidate * > vectorCandidate;
+    vector< const reco::Candidate * >::iterator itCandidate;
 
-  for(itParticle = handleParticle->begin(); itParticle != handleParticle->end(); ++itParticle)
-  {
-    const reco::GenParticle &particle = *itParticle;
+    handleParticle.getByLabel(event, "genParticles");
 
-    pid = particle.pdgId();
-    status = particle.status();
-    px = particle.px(); py = particle.py(); pz = particle.pz(); e = particle.energy(); mass = particle.mass();
-    x = particle.vx(); y = particle.vy(); z = particle.vz();
+    Candidate *candidate;
+    TDatabasePDG *pdg;
+    TParticlePDG *pdgParticle;
+    Int_t pdgCode;
 
-    candidate = factory->NewCandidate();
+    Int_t pid, status;
+    Double_t px, py, pz, e, mass;
+    Double_t x, y, z;
 
-    candidate->PID = pid;
-    pdgCode = TMath::Abs(candidate->PID);
+    pdg = TDatabasePDG::Instance();
 
-    candidate->Status = status;
-
-
-    //M1
-    if(particle.mother()){
-      itCandidate = find(vectorCandidate.begin(), vectorCandidate.end(), particle.mother());
-      if(itCandidate != vectorCandidate.end()) candidate->M1 = distance(vectorCandidate.begin(), itCandidate);
-    }
-
-    //D1
-    itCandidate = find(vectorCandidate.begin(), vectorCandidate.end(), particle.daughter(0));
-    if(itCandidate != vectorCandidate.end()) candidate->D1 = distance(vectorCandidate.begin(), itCandidate);
-
-    //D2
-    if(particle.numberOfDaughters() > 1)
-      itCandidate = find(vectorCandidate.begin(), vectorCandidate.end(), particle.daughter(1));
-    else
-      itCandidate = find(vectorCandidate.begin(), vectorCandidate.end(), particle.daughter(particle.numberOfDaughters() - 1));
-
-    if(itCandidate != vectorCandidate.end()) candidate->D2 = distance(vectorCandidate.begin(), itCandidate);
-
-    pdgParticle = pdg->GetParticle(pid);
-    candidate->Charge = pdgParticle ? Int_t(pdgParticle->Charge()/3.0) : -999;
-    candidate->Mass = mass;
-
-    candidate->Momentum.SetPxPyPzE(px, py, pz, e);
-
-    candidate->Position.SetXYZT(x, y, z, 0.0);
-
-    allParticleOutputArray->Add(candidate);
-
-    if(!pdgParticle) continue;
-
-    if(status == 1)
+    for(itParticle = handleParticle->begin(); itParticle != handleParticle->end(); ++itParticle)
     {
-      stableParticleOutputArray->Add(candidate);
+        vectorCandidate.push_back(&*itParticle);
     }
-    else if(pdgCode <= 5 || pdgCode == 21 || pdgCode == 15)
+
+    for(itParticle = handleParticle->begin(); itParticle != handleParticle->end(); ++itParticle)
     {
-      partonOutputArray->Add(candidate);
+        const reco::GenParticle &particle = *itParticle;
+
+        pid = particle.pdgId();
+        status = particle.status();
+        px = particle.px(); py = particle.py(); pz = particle.pz(); e = particle.energy(); mass = particle.mass();
+        x = particle.vx(); y = particle.vy(); z = particle.vz();
+
+        candidate = factory->NewCandidate();
+
+        candidate->PID = pid;
+        pdgCode = TMath::Abs(candidate->PID);
+
+        candidate->Status = status;
+
+        //M1
+        if(particle.mother()){
+            itCandidate = find(vectorCandidate.begin(), vectorCandidate.end(), particle.mother());
+            if(itCandidate != vectorCandidate.end()) candidate->M1 = distance(vectorCandidate.begin(), itCandidate);
+        }
+
+        //D1
+        itCandidate = find(vectorCandidate.begin(), vectorCandidate.end(), particle.daughter(0));
+        if(itCandidate != vectorCandidate.end()) candidate->D1 = distance(vectorCandidate.begin(), itCandidate);
+
+        //D2
+        if(particle.numberOfDaughters() > 1)
+            itCandidate = find(vectorCandidate.begin(), vectorCandidate.end(), particle.daughter(1));
+        else
+            itCandidate = find(vectorCandidate.begin(), vectorCandidate.end(), particle.daughter(particle.numberOfDaughters() - 1));
+
+        if(itCandidate != vectorCandidate.end()) candidate->D2 = distance(vectorCandidate.begin(), itCandidate);
+
+        pdgParticle = pdg->GetParticle(pid);
+        candidate->Charge = pdgParticle ? Int_t(pdgParticle->Charge()/3.0) : -999;
+        candidate->Mass = mass;
+
+        candidate->Momentum.SetPxPyPzE(px, py, pz, e);
+
+        candidate->Position.SetXYZT(x, y, z, 0.0);
+
+        allParticleOutputArray->Add(candidate);
+
+        if(!pdgParticle) continue;
+
+        if(status == 1)
+        {
+            stableParticleOutputArray->Add(candidate);
+        }
+        else if(pdgCode <= 5 || pdgCode == 21 || pdgCode == 15)
+        {
+            partonOutputArray->Add(candidate);
+        }
     }
-  }
 }
 
 //---------------------------------------------------------------------------
@@ -130,152 +149,154 @@ static bool interrupted = false;
 
 void SignalHandler(int sig)
 {
-  interrupted = true;
+    interrupted = true;
 }
 
 //---------------------------------------------------------------------------
 
 int main(int argc, char *argv[])
 {
-  char appName[] = "DelphesCMSFWLite";
-  stringstream message;
-  TFile *inputFile = 0;
-  TFile *outputFile = 0;
-  TStopwatch eventStopWatch;
-  ExRootTreeWriter *treeWriter = 0;
-  ExRootConfReader *confReader = 0;
-  Delphes *modularDelphes = 0;
-  DelphesFactory *factory = 0;
-  TObjArray *allParticleOutputArray = 0, *stableParticleOutputArray = 0, *partonOutputArray = 0;
-  Int_t i;
-  Int_t maxEvents, skipEvents;
-  Long64_t eventCounter, numberOfEvents;
+    char appName[] = "DelphesCMSFWLite";
+    stringstream message;
+    TFile *inputFile = 0;
+    TFile *outputFile = 0;
+    TStopwatch eventStopWatch;
+    ExRootTreeWriter *treeWriter = 0;
+    ExRootTreeBranch *branchEvent = 0;
+    ExRootConfReader *confReader = 0;
+    Delphes *modularDelphes = 0;
+    DelphesFactory *factory = 0;
+    TObjArray *allParticleOutputArray = 0, *stableParticleOutputArray = 0, *partonOutputArray = 0;
+    Int_t i;
+    Int_t maxEvents, skipEvents;
+    Long64_t eventCounter, numberOfEvents;
 
-  if(argc < 4)
-  {
-    cout << " Usage: " << appName << " config_file" << " output_file" << " input_file(s)" << endl;
-    cout << " config_file - configuration file in Tcl format," << endl;
-    cout << " output_file - output file in ROOT format," << endl;
-    cout << " input_file(s) - input file(s) in ROOT format." << endl;
-    return 1;
-  }
-
-  signal(SIGINT, SignalHandler);
-
-  gROOT->SetBatch();
-
-  int appargc = 1;
-  char *appargv[] = {appName};
-  TApplication app(appName, &appargc, appargv);
-
-  AutoLibraryLoader::enable();
-
-  try
-  {
-    outputFile = TFile::Open(argv[2], "CREATE");
-
-    if(outputFile == NULL)
+    if(argc < 4)
     {
-      message << "can't open " << argv[2] << endl;
-      throw runtime_error(message.str());
+        cout << " Usage: " << appName << " config_file" << " output_file" << " input_file(s)" << endl;
+        cout << " config_file - configuration file in Tcl format," << endl;
+        cout << " output_file - output file in ROOT format," << endl;
+        cout << " input_file(s) - input file(s) in ROOT format." << endl;
+        return 1;
     }
 
-    treeWriter = new ExRootTreeWriter(outputFile, "Delphes");
+    signal(SIGINT, SignalHandler);
 
-    confReader = new ExRootConfReader;
-    confReader->ReadFile(argv[1]);
+    gROOT->SetBatch();
 
-    maxEvents = confReader->GetInt("::MaxEvents", 0);
-    skipEvents = confReader->GetInt("::SkipEvents", 0);
+    int appargc = 1;
+    char *appargv[] = {appName};
+    TApplication app(appName, &appargc, appargv);
 
-    if(maxEvents < 0)
-      {
-	throw runtime_error("MaxEvents must be zero or positive");
-      }
+    AutoLibraryLoader::enable();
 
-    if(skipEvents < 0)
-      {
-	throw runtime_error("SkipEvents must be zero or positive");
-      }
-
-
-    modularDelphes = new Delphes("Delphes");
-    modularDelphes->SetConfReader(confReader);
-    modularDelphes->SetTreeWriter(treeWriter);
-
-    factory = modularDelphes->GetFactory();
-    allParticleOutputArray = modularDelphes->ExportArray("allParticles");
-    stableParticleOutputArray = modularDelphes->ExportArray("stableParticles");
-    partonOutputArray = modularDelphes->ExportArray("partons");
-
-    modularDelphes->InitTask();
-    
-    int totEventCounter = 0;
-
-    for(i = 3; i < argc && !interrupted && (maxEvents <= 0 || totEventCounter - skipEvents < maxEvents); ++i)
+    try
     {
-      cout << "** Reading " << argv[i] << endl;
+        outputFile = TFile::Open(argv[2], "CREATE");
 
-      inputFile = TFile::Open(argv[i]);
+        if(outputFile == NULL)
+        {
+            message << "can't open " << argv[2] << endl;
+            throw runtime_error(message.str());
+        }
 
-      if(inputFile == NULL)
-      {
-        message << "can't open " << argv[i] << endl;
-        throw runtime_error(message.str());
-      }
+        treeWriter = new ExRootTreeWriter(outputFile, "Delphes");
 
-      fwlite::Event event(inputFile);
+        branchEvent = treeWriter->NewBranch("Event", HepMCEvent::Class());
 
-      numberOfEvents = event.size();
+        confReader = new ExRootConfReader;
+        confReader->ReadFile(argv[1]);
 
-      if(numberOfEvents <= 0) continue;
+	maxEvents = confReader->GetInt("::MaxEvents", 0);
+	skipEvents = confReader->GetInt("::SkipEvents", 0);
 
-      // ExRootProgressBar progressBar(numberOfEvents - 1);
-      ExRootProgressBar progressBar(-1);
+	if(maxEvents < 0)
+	  {
+	    throw runtime_error("MaxEvents must be zero or positive");
+	  }
 
-      // Loop over all objects
-      eventCounter = 0;
-      modularDelphes->Clear();
-      treeWriter->Clear();
+	if(skipEvents < 0)
+	  {
+	    throw runtime_error("SkipEvents must be zero or positive");
+	  }
 
-      for(event.toBegin()+skipEvents; !event.atEnd() && !interrupted && (maxEvents <= 0 || totEventCounter < maxEvents); ++event)
-      {
-        ConvertInput(event, factory, allParticleOutputArray, stableParticleOutputArray, partonOutputArray);
-        modularDelphes->ProcessTask();
+        modularDelphes = new Delphes("Delphes");
+        modularDelphes->SetConfReader(confReader);
+        modularDelphes->SetTreeWriter(treeWriter);
 
-        treeWriter->Fill();
+        factory = modularDelphes->GetFactory();
+        allParticleOutputArray = modularDelphes->ExportArray("allParticles");
+        stableParticleOutputArray = modularDelphes->ExportArray("stableParticles");
+        partonOutputArray = modularDelphes->ExportArray("partons");
 
-        modularDelphes->Clear();
-        treeWriter->Clear();
+        modularDelphes->InitTask();
 
-        progressBar.Update(eventCounter, eventCounter);
-        ++eventCounter;
-	++totEventCounter;
-      }
+	int totEventCounter = 0;
 
-      progressBar.Update(eventCounter, eventCounter, kTRUE);
-      progressBar.Finish();
+	//        for(i = 3; i < argc && !interrupted; ++i)
+	for(i = 3; i < argc && !interrupted && (maxEvents <= 0 || totEventCounter - skipEvents < maxEvents); ++i)
+        {
+            cout << "** Reading " << argv[i] << endl;
 
-      inputFile->Close();
+            inputFile = TFile::Open(argv[i]);
+
+            if(inputFile == NULL)
+            {
+                message << "can't open " << argv[i] << endl;
+                throw runtime_error(message.str());
+            }
+
+            fwlite::Event event(inputFile);
+
+            numberOfEvents = event.size();
+
+            if(numberOfEvents <= 0) continue;
+
+            // ExRootProgressBar progressBar(numberOfEvents - 1);
+            ExRootProgressBar progressBar(-1);
+
+            // Loop over all objects
+            eventCounter = 0;
+            modularDelphes->Clear();
+            treeWriter->Clear();
+	    //            for(event.toBegin(); !event.atEnd() && !interrupted; ++event)
+	    for(event.toBegin()+skipEvents; !event.atEnd() && !interrupted && (maxEvents <= 0 || totEventCounter < maxEvents); ++event)
+            {
+                ConvertInput(event, eventCounter, branchEvent, factory, allParticleOutputArray, stableParticleOutputArray, partonOutputArray);
+                modularDelphes->ProcessTask();
+
+                treeWriter->Fill();
+
+                modularDelphes->Clear();
+                treeWriter->Clear();
+
+                progressBar.Update(eventCounter, eventCounter);
+                ++eventCounter;
+            }
+
+            progressBar.Update(eventCounter, eventCounter, kTRUE);
+            progressBar.Finish();
+
+            inputFile->Close();
+        }
+
+        modularDelphes->FinishTask();
+        treeWriter->Write();
+
+        cout << "** Exiting..." << endl;
+
+        delete modularDelphes;
+        delete confReader;
+        delete treeWriter;
+        delete outputFile;
+
+        return 0;
     }
-
-    modularDelphes->FinishTask();
-    treeWriter->Write();
-
-    cout << "** Exiting..." << endl;
-
-    delete modularDelphes;
-    delete confReader;
-    delete treeWriter;
-    delete outputFile;
-
-    return 0;
-  }
-  catch(runtime_error &e)
-  {
-    if(treeWriter) delete treeWriter;
-    if(outputFile) delete outputFile;
-    cerr << "** ERROR: " << e.what() << endl;
-    return 1;
-  }
+    catch(runtime_error &e)
+    {
+        if(treeWriter) delete treeWriter;
+        if(outputFile) delete outputFile;
+        cerr << "** ERROR: " << e.what() << endl;
+        return 1;
+    }
 }
