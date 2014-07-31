@@ -35,8 +35,9 @@
 #include "DataFormats/FWLite/interface/Event.h"
 #include "DataFormats/FWLite/interface/Handle.h"
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
-#include "SimDataFormats/GeneratorProducts/interface/HepMCProduct.h"
-#include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
+
+#include "SimDataFormats/GeneratorProducts/interface/LHEEventProduct.h"
+#include "SimDataFormats/GeneratorProducts/interface/LesHouches.h"
 
 
 using namespace std;
@@ -45,22 +46,19 @@ using namespace std;
 
 void ConvertInput(fwlite::Event &event, Long64_t eventCounter, ExRootTreeBranch *branch, DelphesFactory *factory, TObjArray *allParticleOutputArray, TObjArray *stableParticleOutputArray, TObjArray *partonOutputArray)
 {
-// event information
-    HepMCEvent *element;
+    LHEFEvent *lheEvt;
 
-    fwlite::Handle<GenEventInfoProduct> genEvtInfo;
-    genEvtInfo.getByLabel(event, "generator");
+    fwlite::Handle<LHEEventProduct> lheEvtInfo;
+    lheEvtInfo.getByLabel(event, "source");
 
-    element = static_cast<HepMCEvent *>(branch->NewEntry());
+    lheEvt = static_cast<LHEFEvent *>(branch->NewEntry());
 
-    element->Number = eventCounter;
-
-    element->ProcessID = genEvtInfo->signalProcessID();
-    element->MPI = 1;
-    element->Weight = genEvtInfo->weights()[0];
-    element->Scale = genEvtInfo->qScale();
-    element->AlphaQED = genEvtInfo->alphaQED();
-    element->AlphaQCD = genEvtInfo->alphaQCD();
+    lheEvt->Number = eventCounter;
+    lheEvt->Weight = lheEvtInfo->originalXWGTUP();
+    lheEvt->ProcessID = ((lhef::HEPEUP)lheEvtInfo->hepeup()).IDPRUP;
+    lheEvt->ScalePDF = ((lhef::HEPEUP)lheEvtInfo->hepeup()).IDPRUP;
+    lheEvt->AlphaQED = ((lhef::HEPEUP)lheEvtInfo->hepeup()).SCALUP;
+    lheEvt->AlphaQCD = ((lhef::HEPEUP)lheEvtInfo->hepeup()).AQCDUP;
 
     fwlite::Handle< vector< reco::GenParticle > > handleParticle;
     vector< reco::GenParticle >::const_iterator itParticle;
@@ -156,147 +154,156 @@ void SignalHandler(int sig)
 
 int main(int argc, char *argv[])
 {
-    char appName[] = "DelphesCMSFWLite";
-    stringstream message;
-    TFile *inputFile = 0;
-    TFile *outputFile = 0;
-    TStopwatch eventStopWatch;
-    ExRootTreeWriter *treeWriter = 0;
-    ExRootTreeBranch *branchEvent = 0;
-    ExRootConfReader *confReader = 0;
-    Delphes *modularDelphes = 0;
-    DelphesFactory *factory = 0;
-    TObjArray *allParticleOutputArray = 0, *stableParticleOutputArray = 0, *partonOutputArray = 0;
-    Int_t i;
-    Int_t maxEvents, skipEvents;
-    Long64_t eventCounter, numberOfEvents;
-
-    if(argc < 4)
+  char appName[] = "DelphesCMSFWLite";
+  stringstream message;
+  TFile *inputFile = 0;
+  TFile *outputFile = 0;
+  TStopwatch eventStopWatch;
+  ExRootTreeWriter *treeWriter = 0;
+  ExRootTreeBranch *branchEvent = 0;
+  ExRootConfReader *confReader = 0;
+  Delphes *modularDelphes = 0;
+  DelphesFactory *factory = 0;
+  TObjArray *allParticleOutputArray = 0, *stableParticleOutputArray = 0, *partonOutputArray = 0;
+  Int_t i;
+  Int_t maxEvents, skipEvents;
+  Long64_t eventCounter, numberOfEvents;
+  
+  if(argc < 4)
     {
-        cout << " Usage: " << appName << " config_file" << " output_file" << " input_file(s)" << endl;
-        cout << " config_file - configuration file in Tcl format," << endl;
-        cout << " output_file - output file in ROOT format," << endl;
-        cout << " input_file(s) - input file(s) in ROOT format." << endl;
-        return 1;
+      cout << " Usage: " << appName << " config_file" << " output_file" << " input_file(s)" << endl;
+      cout << " config_file - configuration file in Tcl format," << endl;
+      cout << " output_file - output file in ROOT format," << endl;
+      cout << " input_file(s) - input file(s) in ROOT format." << endl;
+      return 1;
     }
-
-    signal(SIGINT, SignalHandler);
-
-    gROOT->SetBatch();
-
-    int appargc = 1;
-    char *appargv[] = {appName};
-    TApplication app(appName, &appargc, appargv);
-
-    AutoLibraryLoader::enable();
-
-    try
+  
+  signal(SIGINT, SignalHandler);
+  
+  gROOT->SetBatch();
+  
+  int appargc = 1;
+  char *appargv[] = {appName};
+  TApplication app(appName, &appargc, appargv);
+  
+  AutoLibraryLoader::enable();
+  
+  try
     {
-        outputFile = TFile::Open(argv[2], "CREATE");
-
-        if(outputFile == NULL)
+      outputFile = TFile::Open(argv[2], "CREATE");
+      
+      if(outputFile == NULL)
         {
-            message << "can't open " << argv[2] << endl;
-            throw runtime_error(message.str());
+	  message << "can't open " << argv[2] << endl;
+	  throw runtime_error(message.str());
         }
+      
+      treeWriter = new ExRootTreeWriter(outputFile, "Delphes");
+      
+      branchEvent = treeWriter->NewBranch("Event", LHEFEvent::Class());
+      
+      confReader = new ExRootConfReader;
+      confReader->ReadFile(argv[1]);
+      
+      maxEvents = confReader->GetInt("::MaxEvents", 0);
+      skipEvents = confReader->GetInt("::SkipEvents", 0);
+      
+      if (maxEvents<0) {
+	throw runtime_error("MaxEvents must be zero or positive");
+      }
+      if (skipEvents<0){ 
+	throw runtime_error("SkipEvents must be zero or positive");
+      }
+      
+      modularDelphes = new Delphes("Delphes");
+      modularDelphes->SetConfReader(confReader);
+      modularDelphes->SetTreeWriter(treeWriter);
 
-        treeWriter = new ExRootTreeWriter(outputFile, "Delphes");
-
-        branchEvent = treeWriter->NewBranch("Event", HepMCEvent::Class());
-
-        confReader = new ExRootConfReader;
-        confReader->ReadFile(argv[1]);
-
-	maxEvents = confReader->GetInt("::MaxEvents", 0);
-	skipEvents = confReader->GetInt("::SkipEvents", 0);
-
-	if(maxEvents < 0)
-	  {
-	    throw runtime_error("MaxEvents must be zero or positive");
-	  }
-
-	if(skipEvents < 0)
-	  {
-	    throw runtime_error("SkipEvents must be zero or positive");
-	  }
-
-        modularDelphes = new Delphes("Delphes");
-        modularDelphes->SetConfReader(confReader);
-        modularDelphes->SetTreeWriter(treeWriter);
-
-        factory = modularDelphes->GetFactory();
-        allParticleOutputArray = modularDelphes->ExportArray("allParticles");
-        stableParticleOutputArray = modularDelphes->ExportArray("stableParticles");
-        partonOutputArray = modularDelphes->ExportArray("partons");
-
-        modularDelphes->InitTask();
-
-	int totEventCounter = 0;
-
-	//        for(i = 3; i < argc && !interrupted; ++i)
-	for(i = 3; i < argc && !interrupted && (maxEvents <= 0 || totEventCounter - skipEvents < maxEvents); ++i)
-        {
-            cout << "** Reading " << argv[i] << endl;
-
-            inputFile = TFile::Open(argv[i]);
-
-            if(inputFile == NULL)
-            {
-                message << "can't open " << argv[i] << endl;
-                throw runtime_error(message.str());
+      factory = modularDelphes->GetFactory();
+      allParticleOutputArray = modularDelphes->ExportArray("allParticles");
+      stableParticleOutputArray = modularDelphes->ExportArray("stableParticles");
+      partonOutputArray = modularDelphes->ExportArray("partons");
+      
+      modularDelphes->InitTask();
+      
+      int totEventCounter = 0;
+      
+      for(i = 3; i < argc && !interrupted; ++i)
+	{
+	  cout << "** Reading " << argv[i] << endl;
+	  
+	  inputFile = TFile::Open(argv[i]);
+	  
+	  if(inputFile == NULL)
+	    {
+	      message << "can't open " << argv[i] << endl;
+	      throw runtime_error(message.str());
             }
-
+	  
             fwlite::Event event(inputFile);
-
+	    
             numberOfEvents = event.size();
-
+	    
             if(numberOfEvents <= 0) continue;
-
-            // ExRootProgressBar progressBar(numberOfEvents - 1);
+	    
             ExRootProgressBar progressBar(-1);
-
+	    
             // Loop over all objects
             eventCounter = 0;
             modularDelphes->Clear();
             treeWriter->Clear();
-	    //            for(event.toBegin(); !event.atEnd() && !interrupted; ++event)
-	    for(event.toBegin()+skipEvents; !event.atEnd() && !interrupted && (maxEvents <= 0 || totEventCounter < maxEvents); ++event)
-            {
-                ConvertInput(event, eventCounter, branchEvent, factory, allParticleOutputArray, stableParticleOutputArray, partonOutputArray);
-                modularDelphes->ProcessTask();
+	    
+            for(event.toBegin(); !event.atEnd() && !interrupted; ++event) 
+	      {
+		
+		if (eventCounter<skipEvents) 
+		  {
+		    ++eventCounter;
+		    continue;
+		  }
+		else if (totEventCounter>maxEvents-1 && maxEvents>0) 
+		  {
+		    break;
+		  }
+		else 
+		  {
+		    ConvertInput(event, eventCounter, branchEvent, factory, allParticleOutputArray, stableParticleOutputArray, partonOutputArray);
+		    modularDelphes->ProcessTask();
+		    
+		    treeWriter->Fill();
+		    
+		    modularDelphes->Clear();
+		    treeWriter->Clear();
+		    
+		    progressBar.Update(totEventCounter, totEventCounter);
+		    ++eventCounter;
+		    ++totEventCounter;
+		  }
+	      }
 
-                treeWriter->Fill();
-
-                modularDelphes->Clear();
-                treeWriter->Clear();
-
-                progressBar.Update(eventCounter, eventCounter);
-                ++eventCounter;
-            }
-
-            progressBar.Update(eventCounter, eventCounter, kTRUE);
-            progressBar.Finish();
+	    progressBar.Update(totEventCounter, totEventCounter, kTRUE);
+	    progressBar.Finish();
 
             inputFile->Close();
         }
-
-        modularDelphes->FinishTask();
-        treeWriter->Write();
-
-        cout << "** Exiting..." << endl;
-
-        delete modularDelphes;
-        delete confReader;
-        delete treeWriter;
-        delete outputFile;
-
-        return 0;
+      
+      modularDelphes->FinishTask();
+      treeWriter->Write();
+      
+      cout << "** Exiting..." << endl;
+      
+      delete modularDelphes;
+      delete confReader;
+      delete treeWriter;
+      delete outputFile;
+      
+      return 0;
     }
-    catch(runtime_error &e)
+  catch(runtime_error &e)
     {
-        if(treeWriter) delete treeWriter;
-        if(outputFile) delete outputFile;
-        cerr << "** ERROR: " << e.what() << endl;
-        return 1;
+      if(treeWriter) delete treeWriter;
+      if(outputFile) delete outputFile;
+      cerr << "** ERROR: " << e.what() << endl;
+      return 1;
     }
 }
