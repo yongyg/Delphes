@@ -52,36 +52,36 @@ set ExecutionPath {
   PuppiRho
   PuppiJetPileUpSubtractor
   PuppiMissingET
-  
+
   PhotonEfficiency
   PhotonIsolation
 
   ElectronEfficiency
   ElectronIsolation
-  
+
   MuonEfficiency
   MuonIsolation
-  
+
   MissingET
-  
+
   BTagging
   BTaggingLoose
   TauTagging
 
-  TrackPVSubtractor
+  TrackPVSubtractor  
   IsoTrackFilter
-  
+
   UniqueObjectFinderGJ
   UniqueObjectFinderEJ
   UniqueObjectFinderMJ
-  
+
   ScalarHT
-  
+
   PileUpJetID
-  
+
   PileUpJetIDMissingET
-  
-  ConstituentFilter
+
+  ConstituentFilter  
   TreeWriter
 }
 
@@ -90,8 +90,8 @@ module Merger PileUpJetIDMissingET {
   add InputArray MuonMomentumSmearing/muons
   add InputArray PileUpJetID/eflowTowers
   set MomentumOutputArray momentum
-}
-  
+}  
+
 module Merger EFlowChargedMerger {
   add InputArray TrackPileUpSubtractor/eflowTracks
   add InputArray MuonMomentumSmearing/muons
@@ -102,11 +102,11 @@ module RunPUPPI RunPUPPI {
 #  set TrackInputArray EFlowChargedMerger/eflowTracks
   set TrackInputArray Calorimeter/eflowTracks
   set NeutralInputArray Calorimeter/eflowTowers
-  
+
   set TrackerEta 2.5
 
   set OutputArray weightedparticles
-} 
+}
 
 module FastJetFinder PuppiJetFinder {
   set InputArray RunPUPPI/weightedparticles
@@ -118,7 +118,7 @@ module FastJetFinder PuppiJetFinder {
   set JetPTMin 0.
 
   # remove pileup again (using it for synchronization)
-  # set KeepPileUp 0
+#  set KeepPileUp 0
 }
 
 module FastJetFinder PuppiRho {
@@ -126,7 +126,7 @@ module FastJetFinder PuppiRho {
 
   set ComputeRho true
   set RhoOutputArray rho
-
+  
   # area algorithm: 0 Do not compute area, 1 Active area explicit ghosts, 2 One ghost passive area, 3 Passive area, 4 Voronoi, 5 Active area
   set AreaAlgorithm 5
 
@@ -137,7 +137,7 @@ module FastJetFinder PuppiRho {
   set RhoEtaMax 5.0
   
   add RhoEtaRange 0.0 2.5
-  add RhoEtaRange 2.5 4.0
+  add RhoEtaRange 2.5 4.0 
   add RhoEtaRange 4.0 5.0
 
   set JetPTMin 0.0
@@ -148,31 +148,10 @@ module JetPileUpSubtractor PuppiJetPileUpSubtractor {
   set RhoInputArray PuppiRho/rho
   
   set OutputArray jets
-
+  
   set JetPTMin 10.0
-} 
-
-
-module FastJetFinder GlobalRho {
-#  set InputArray Calorimeter/towers
-  set InputArray EFlowMerger/eflow
-  
-  set ComputeRho true
-  set RhoOutputArray rho
-  
-  # area algorithm: 0 Do not compute area, 1 Active area explicit ghosts, 2 One ghost passive area, 3 Passive area, 4 Voronoi, 5 Active area
-  set AreaAlgorithm 5
-  
-  # jet algorithm: 1 CDFJetClu, 2 MidPoint, 3 SIScone, 4 kt, 5 Cambridge/Aachen, 6 antikt
-  set JetAlgorithm 4
-  set ParameterR 0.4
-  set GhostEtaMax 5.0
-  set RhoEtaMax 5.0
-
-  add RhoEtaRange 0.0 5.0
-  
-  set JetPTMin 0.0
 }
+
 
 ###############
 # PileUp Merger
@@ -188,9 +167,9 @@ module PileUpMerger PileUpMerger {
   set InputBSX 2.44
   set InputBSY 3.39
 
-  # ... and replace it with beam spot from CMSSW files  
+  # ... and replace it with beam spot from CMSSW files
   set OutputBSX 0.24
-  set OutputBSY 0.39  
+  set OutputBSY 0.39
 
   # pre-generated minbias input file
   set PileUpFile MinBias.pileup
@@ -209,7 +188,7 @@ module ModifyBeamSpot ModifyBeamSpot {
   set ZVertexSpread 0.053
   set InputArray PileUpMerger/stableParticles
   set OutputArray stableParticles
-  set PVOutputArray PV  
+  set PVOutputArray PV
 }
 
 module ModifyBeamSpot ModifyBeamSpotNoPU {
@@ -219,13 +198,14 @@ module ModifyBeamSpot ModifyBeamSpotNoPU {
   set PVOutputArray PV
 }
 
+
+
 #################################
 # Propagate particles in cylinder
 #################################
 
 module ParticlePropagator ParticlePropagator {
-#  set InputArray ModifyBeamSpot/stableParticles
-    set InputArray PileUpMerger/stableParticles
+  set InputArray PileUpMerger/stableParticles
 
   set OutputArray stableParticles
   set ChargedHadronOutputArray chargedHadrons
@@ -242,8 +222,7 @@ module ParticlePropagator ParticlePropagator {
 }
 
 module ParticlePropagator ParticlePropagatorNoPU {
-#  set InputArray ModifyBeamSpot/stableParticles
-    set InputArray Delphes/stableParticles
+  set InputArray Delphes/stableParticles
 
   set OutputArray stableParticles
   set ChargedHadronOutputArray chargedHadrons
@@ -259,7 +238,7 @@ module ParticlePropagator ParticlePropagatorNoPU {
   set Bz 3.8
 
   # remove pileup again (using it for synchronization)
-    set KeepPileUp 0
+  set KeepPileUp 0
 }
 
 
@@ -272,18 +251,22 @@ module ParticlePropagator ParticlePropagatorNoPU {
 module StatusPidFilter StatusPid {
 #    set InputArray Delphes/stableParticles
     set InputArray Delphes/allParticles
-
     set OutputArray filteredParticles
 
     set PTMin 1.0
 }
 
-# Saves a particle (or particles?) intended to represent the beamspot
+#######################
+# GenBeamSpotFilter
+# Saves a particle intended to represent the beamspot
+#######################
+
 module GenBeamSpotFilter GenBeamSpotFilter {
     set InputArray ModifyBeamSpot/stableParticles
     set OutputArray beamSpotParticles
-    
+
 }
+
 
 
 ####################################
@@ -294,9 +277,7 @@ module Efficiency ChargedHadronTrackingEfficiency {
   set InputArray ParticlePropagator/chargedHadrons
   set OutputArray chargedHadrons
 
-  # add EfficiencyFormula {efficiency formula as a function of eta and pt}
-
-  # tracking efficiency formula for charged hadrons
+  # add EfficiencyFormula {efficiency formula as a function of eta and pt} - Phase II
   set EfficiencyFormula {                                                    (pt <= 0.1)   * (0.00) + \
                                            (abs(eta) <= 1.5) * (pt > 0.1   && pt <= 1.0)   * (0.85) + \
                                            (abs(eta) <= 1.5) * (pt > 1.0)                  * (0.97) + \
@@ -308,10 +289,8 @@ module Efficiency ChargedHadronTrackingEfficiency {
 module Efficiency ChargedHadronTrackingEfficiencyNoPU {
   set InputArray ParticlePropagatorNoPU/chargedHadrons
   set OutputArray chargedHadrons
-
-  # add EfficiencyFormula {efficiency formula as a function of eta and pt}
-
-  # tracking efficiency formula for charged hadrons
+  
+    # add EfficiencyFormula {efficiency formula as a function of eta and pt} - Phase II
   set EfficiencyFormula {                                                    (pt <= 0.1)   * (0.00) + \
                                            (abs(eta) <= 1.5) * (pt > 0.1   && pt <= 1.0)   * (0.85) + \
                                            (abs(eta) <= 1.5) * (pt > 1.0)                  * (0.97) + \
@@ -322,7 +301,7 @@ module Efficiency ChargedHadronTrackingEfficiencyNoPU {
 
 
 ##############################
-# Electron tracking efficiency - ID
+# Electron tracking efficiency - ID - Phase-II
 ##############################
 
 module Efficiency ElectronTrackingEfficiency {
@@ -331,6 +310,7 @@ module Efficiency ElectronTrackingEfficiency {
 
   # set EfficiencyFormula {efficiency formula as a function of eta and pt}
   # tracking efficiency formula for electrons
+
   set EfficiencyFormula {                                                    (pt <= 0.1)   * (0.00) + \
                                            (abs(eta) <= 1.5) * (pt > 0.1   && pt <= 1.0)   * (0.85) + \
                                            (abs(eta) <= 1.5) * (pt > 1.0   && pt <= 1.0e2) * (0.97) + \
@@ -345,8 +325,9 @@ module Efficiency ElectronTrackingEfficiencyNoPU {
   set InputArray ParticlePropagatorNoPU/electrons
   set OutputArray electrons
 
-  # set EfficiencyFormula {efficiency formula as a function of eta and pt}
+    # set EfficiencyFormula {efficiency formula as a function of eta and pt}
   # tracking efficiency formula for electrons
+
   set EfficiencyFormula {                                                    (pt <= 0.1)   * (0.00) + \
                                            (abs(eta) <= 1.5) * (pt > 0.1   && pt <= 1.0)   * (0.85) + \
                                            (abs(eta) <= 1.5) * (pt > 1.0   && pt <= 1.0e2) * (0.97) + \
@@ -369,6 +350,7 @@ module Efficiency MuonTrackingEfficiency {
   # set EfficiencyFormula {efficiency formula as a function of eta and pt}
 
   # tracking efficiency formula for muons
+
   set EfficiencyFormula {                                                    (pt <= 0.1)   * (0.00) + \
                                            (abs(eta) <= 1.5) * (pt > 0.1   && pt <= 1.0)   * (0.998) + \
                                            (abs(eta) <= 1.5) * (pt > 1.0)                  * (0.9998) + \
@@ -376,13 +358,15 @@ module Efficiency MuonTrackingEfficiency {
                          (abs(eta) > 1.5 && abs(eta) <= 2.5) * (pt > 1.0)                  * (0.98) + \
                          (abs(eta) > 2.5)                                                  * (0.00)}
 }
+
 module Efficiency MuonTrackingEfficiencyNoPU {
   set InputArray ParticlePropagatorNoPU/muons
   set OutputArray muons
 
-  # set EfficiencyFormula {efficiency formula as a function of eta and pt}
+    # set EfficiencyFormula {efficiency formula as a function of eta and pt}
 
   # tracking efficiency formula for muons
+
   set EfficiencyFormula {                                                    (pt <= 0.1)   * (0.00) + \
                                            (abs(eta) <= 1.5) * (pt > 0.1   && pt <= 1.0)   * (0.998) + \
                                            (abs(eta) <= 1.5) * (pt > 1.0)                  * (0.9998) + \
@@ -390,6 +374,7 @@ module Efficiency MuonTrackingEfficiencyNoPU {
                          (abs(eta) > 1.5 && abs(eta) <= 2.5) * (pt > 1.0)                  * (0.98) + \
                          (abs(eta) > 2.5)                                                  * (0.00)}
 }
+
 
 
 ########################################
@@ -401,8 +386,6 @@ module MomentumSmearing ChargedHadronMomentumSmearing {
   set OutputArray chargedHadrons
 
   # set ResolutionFormula {resolution formula as a function of eta and pt}
-
-  # resolution formula for charged hadrons
   set ResolutionFormula {                  (abs(eta) <= 1.5) * (pt > 0.1   && pt <= 1.0)   * (0.015) + \
                                            (abs(eta) <= 1.5) * (pt > 1.0   && pt <= 1.0e1) * (0.013) + \
                                            (abs(eta) <= 1.5) * (pt > 1.0e1 && pt <= 2.0e2) * (0.02) + \
@@ -412,13 +395,12 @@ module MomentumSmearing ChargedHadronMomentumSmearing {
                          (abs(eta) > 1.5 && abs(eta) <= 2.5) * (pt > 1.0e1 && pt <= 2.0e2) * (0.04) + \
                          (abs(eta) > 1.5 && abs(eta) <= 2.5) * (pt > 2.0e2)                * (0.05)}
 }
+
 module MomentumSmearing ChargedHadronMomentumSmearingNoPU {
   set InputArray ChargedHadronTrackingEfficiencyNoPU/chargedHadrons
   set OutputArray chargedHadrons
 
-  # set ResolutionFormula {resolution formula as a function of eta and pt}
-
-  # resolution formula for charged hadrons
+    # set ResolutionFormula {resolution formula as a function of eta and pt}
   set ResolutionFormula {                  (abs(eta) <= 1.5) * (pt > 0.1   && pt <= 1.0)   * (0.015) + \
                                            (abs(eta) <= 1.5) * (pt > 1.0   && pt <= 1.0e1) * (0.013) + \
                                            (abs(eta) <= 1.5) * (pt > 1.0e1 && pt <= 2.0e2) * (0.02) + \
@@ -427,7 +409,8 @@ module MomentumSmearing ChargedHadronMomentumSmearingNoPU {
                          (abs(eta) > 1.5 && abs(eta) <= 2.5) * (pt > 1.0   && pt <= 1.0e1) * (0.015) + \
                          (abs(eta) > 1.5 && abs(eta) <= 2.5) * (pt > 1.0e1 && pt <= 2.0e2) * (0.04) + \
                          (abs(eta) > 1.5 && abs(eta) <= 2.5) * (pt > 2.0e2)                * (0.05)}
-}
+} 
+
 
 
 #################################
@@ -439,25 +422,23 @@ module EnergySmearing ElectronEnergySmearing {
   set OutputArray electrons
 
   # set ResolutionFormula {resolution formula as a function of eta and energy}
-
   set ResolutionFormula {                  (abs(eta) <= 2.5) * (energy > 0.1   && energy <= 2.5e1) * (energy*0.015) + \
                                            (abs(eta) <= 2.5) * (energy > 2.5e1)                    * sqrt(energy^2*0.005^2 + energy*0.027^2 + 0.15^2) + \
                          (abs(eta) > 2.5 && abs(eta) <= 3.0)                                       * sqrt(energy^2*0.005^2 + energy*0.027^2 + 0.15^2) + \
                          (abs(eta) > 3.0 && abs(eta) <= 5.0)                                       * sqrt(energy^2*0.08^2 + energy*1.97^2)}
-
 }
+
 module EnergySmearing ElectronEnergySmearingNoPU {
   set InputArray ElectronTrackingEfficiencyNoPU/electrons
   set OutputArray electrons
 
-  # set ResolutionFormula {resolution formula as a function of eta and energy}
-
+    # set ResolutionFormula {resolution formula as a function of eta and energy}
   set ResolutionFormula {                  (abs(eta) <= 2.5) * (energy > 0.1   && energy <= 2.5e1) * (energy*0.015) + \
                                            (abs(eta) <= 2.5) * (energy > 2.5e1)                    * sqrt(energy^2*0.005^2 + energy*0.027^2 + 0.15^2) + \
                          (abs(eta) > 2.5 && abs(eta) <= 3.0)                                       * sqrt(energy^2*0.005^2 + energy*0.027^2 + 0.15^2) + \
                          (abs(eta) > 3.0 && abs(eta) <= 5.0)                                       * sqrt(energy^2*0.08^2 + energy*1.97^2)}
-
 }
+
 
 ###############################
 # Momentum resolution for muons
@@ -470,6 +451,7 @@ module MomentumSmearing MuonMomentumSmearing {
   # set ResolutionFormula {resolution formula as a function of eta and pt}
 
   # resolution formula for muons
+
     set ResolutionFormula {                  (abs(eta) <= 1.5) * (pt > 0.1   && pt <= 1.0)   * (0.015) + \
                                            (abs(eta) <= 1.5) * (pt > 1.0   && pt <= 1.0e1) * (0.012) + \
                                            (abs(eta) <= 1.5) * (pt > 1.0e1 && pt <= 2.0e2) * (0.015) + \
@@ -479,13 +461,15 @@ module MomentumSmearing MuonMomentumSmearing {
                          (abs(eta) > 1.5 && abs(eta) <= 2.5) * (pt > 1.0e1 && pt <= 2.0e2) * (0.025) + \
 						 (abs(eta) > 1.5 && abs(eta) <= 2.5) * (pt > 2.0e2)                * (0.03)}
 }
+
 module MomentumSmearing MuonMomentumSmearingNoPU {
   set InputArray MuonTrackingEfficiencyNoPU/muons
   set OutputArray muons
 
-  # set ResolutionFormula {resolution formula as a function of eta and pt}
+    # set ResolutionFormula {resolution formula as a function of eta and pt}
 
   # resolution formula for muons
+
     set ResolutionFormula {                  (abs(eta) <= 1.5) * (pt > 0.1   && pt <= 1.0)   * (0.015) + \
                                            (abs(eta) <= 1.5) * (pt > 1.0   && pt <= 1.0e1) * (0.012) + \
                                            (abs(eta) <= 1.5) * (pt > 1.0e1 && pt <= 2.0e2) * (0.015) + \
@@ -514,6 +498,7 @@ module Merger TrackMergerNoPU {
   add InputArray ElectronEnergySmearingNoPU/electrons
   set OutputArray tracks
 }
+
 
 
 #############
@@ -675,6 +660,7 @@ module Calorimeter CalorimeterNoPU {
 
 }
 
+
 ##########################
 # Track pile-up subtractor
 ##########################
@@ -684,8 +670,8 @@ module TrackPileUpSubtractor TrackPileUpSubtractor {
   add InputArray Calorimeter/eflowTracks eflowTracks
   add InputArray ElectronEnergySmearing/electrons electrons
   add InputArray MuonMomentumSmearing/muons muons
-  
-  set PVInputArray  ModifyBeamSpot/PV 
+
+  set PVInputArray  ModifyBeamSpot/PV
 
   # assume perfect pile-up subtraction for tracks with |z| > fZVertexResolution
   # Z vertex resolution in m
@@ -712,58 +698,6 @@ module Merger EFlowMergerNoPU {
   set OutputArray eflow
 }
 
-module Merger EFlowChargedMerger {
-  add InputArray TrackPileUpSubtractor/eflowTracks
-  add InputArray MuonMomentumSmearing/muons
-  set OutputArray eflowTracks
-}
-
-#PUPPI
-
-module RunPUPPI RunPUPPI {
-#  set TrackInputArray EFlowChargedMerger/eflowTracks
-  set TrackInputArray Calorimeter/eflowTracks
-  set NeutralInputArray Calorimeter/eflowTowers
-    
-  set TrackerEta 2.5
-
-  set OutputArray weightedparticles
-}
-
-module FastJetFinder PuppiJetFinder {
-  set InputArray RunPUPPI/weightedparticles
-  set OutputArray jets
-
-  set JetAlgorithm 6
-  set ParameterR 0.4
-
-  set JetPTMin 0.  
-  
-  # remove pileup again (using it for synchronization)
-  set KeepPileUp 0
-}
-
-module FastJetFinder PuppiRho {
-  set InputArray RunPUPPI/weightedparticles
-
-  set ComputeRho true
-  set RhoOutputArray rho
-  
-  # area algorithm: 0 Do not compute area, 1 Active area explicit ghosts, 2 One ghost passive area, 3 Passive area, 4 Voronoi, 5 Active area
-  set AreaAlgorithm 5
-  
-  # jet algorithm: 1 CDFJetClu, 2 MidPoint, 3 SIScone, 4 kt, 5 Cambridge/Aachen, 6 antikt
-  set JetAlgorithm 4
-  set ParameterR 0.4
-  set GhostEtaMax 5.0
-  set RhoEtaMax 5.0
-  
-  add RhoEtaRange 0.0 2.5
-  add RhoEtaRange 2.5 5.0
-  
-  set JetPTMin 0.0
-}
-
 
 #############
 # Rho pile-up
@@ -786,18 +720,40 @@ module FastJetFinder Rho {
   set RhoEtaMax 5.0
 
   add RhoEtaRange 0.0 2.5
-  add RhoEtaRange 2.5 5.0
+  add RhoEtaRange 2.5 4.0
+  add RhoEtaRange 4.0 5.0
 
   set JetPTMin 0.0
 }
+
+module FastJetFinder GlobalRho {
+#  set InputArray Calorimeter/towers
+  set InputArray EFlowMerger/eflow
+
+  set ComputeRho true
+  set RhoOutputArray rho
+
+  # area algorithm: 0 Do not compute area, 1 Active area explicit ghosts, 2 One ghost passive area, 3 Passive area, 4 Voronoi, 5 Active area
+  set AreaAlgorithm 5
+  
+  # jet algorithm: 1 CDFJetClu, 2 MidPoint, 3 SIScone, 4 kt, 5 Cambridge/Aachen, 6 antikt
+  set JetAlgorithm 4
+  set ParameterR 0.4
+  set GhostEtaMax 5.0
+  set RhoEtaMax 5.0
+  
+  add RhoEtaRange 0.0 5.0
+
+  set JetPTMin 0.0
+}
+
 
 #####################
 # MC truth jet finder
 #####################
 
 module FastJetFinder GenJetFinder {
-#  set InputArray Delphes/stableParticles
-  set InputArray ModifyBeamSpot/stableParticles
+  set InputArray Delphes/stableParticles
 
   set OutputArray jets
 
@@ -805,23 +761,21 @@ module FastJetFinder GenJetFinder {
   set JetAlgorithm 6
   set ParameterR 0.4
 
-  set JetPTMin 10.0
+  set JetPTMin 5.0
 
-  # remove pileup again (using it for synchronization)
-  set KeepPileUp 0
 }
 
 module NeutrinoFilter NeutrinoFilter {
   set InputArray Delphes/stableParticles
-  
-  set OutputArray stableParticles
+
+  set OutputArray stableParticles  
 }
 
 module FastJetFinder GenJetFinderNoNu {
   set InputArray NeutrinoFilter/stableParticles
   
   set OutputArray jets
-  
+
   # algorithm: 1 CDFJetClu, 2 MidPoint, 3 SIScone, 4 kt, 5 Cambridge/Aachen, 6 antikt
   set JetAlgorithm 6
   set ParameterR 0.4
@@ -830,19 +784,6 @@ module FastJetFinder GenJetFinderNoNu {
 
 }
 
-
-module FastJetFinder GenJetFinderWithPU {
-#  set InputArray Delphes/stableParticles
-  set InputArray ModifyBeamSpot/stableParticles
-
-  set OutputArray jets
-
-  # algorithm: 1 CDFJetClu, 2 MidPoint, 3 SIScone, 4 kt, 5 Cambridge/Aachen, 6 antikt
-  set JetAlgorithm 6
-  set ParameterR 0.4
-
-  set JetPTMin 10.0
-}
 
 ############
 # Jet finder
@@ -861,7 +802,7 @@ module FastJetFinder FastJetFinder {
   set JetAlgorithm 6
   set ParameterR 0.4
 
-  set JetPTMin 10.0
+  set JetPTMin 5.0
 }
 
 module FastJetFinder FastJetFinderNoPU {
@@ -877,7 +818,7 @@ module FastJetFinder FastJetFinderNoPU {
   set JetAlgorithm 6
   set ParameterR 0.4
 
-  set JetPTMin 10.0
+  set JetPTMin 5.0
 }
 
 
@@ -904,25 +845,25 @@ module FastJetFinder CAJetFinder {
 
 module ConstituentFilter ConstituentFilter {
 
-  set ConEMin 0.
+  set ConEMin 1.
 
 # # add JetInputArray InputArray
-#   add JetInputArray GenJetFinder/jets
-  add JetInputArray GenJetFinderNoNu/jets
+   add JetInputArray GenJetFinderNoNu/jets
 
 # SZ changed this but it seems sensible
 #   add JetInputArray FastJetFinder/jets
-   add JetInputArray UniqueObjectFinderMJ/jets
+#   add JetInputArray UniqueObjectFinderMJ/jets
+  add JetInputArray JetPileUpSubtractor/jets
 
 #   add JetInputArray CAJetFinder/jets
 
-  
+
 # # add ConstituentInputArray InputArray OutputArray
    add ConstituentInputArray Delphes/stableParticles stableParticles
    add ConstituentInputArray TrackPileUpSubtractor/eflowTracks eflowTracks
    add ConstituentInputArray Calorimeter/eflowTowers eflowTowers
    add ConstituentInputArray MuonMomentumSmearing/muons muons
-# }
+  # }
 
 
 
@@ -936,24 +877,14 @@ module JetPileUpSubtractor JetPileUpSubtractor {
 
   set OutputArray jets
 
-  set JetPTMin 10.0
+  set JetPTMin 5.0
 }
-
-module JetPileUpSubtractor PuppiJetPileUpSubtractor {
-  set JetInputArray PuppiJetFinder/jets
-  set RhoInputArray PuppiRho/rho
-  
-  set OutputArray jets
-  
-  set JetPTMin 10.0
-}
-
 
 module JetPileUpSubtractor CAJetPileUpSubtractor {
   set JetInputArray CAJetFinder/jets
   set RhoInputArray Rho/rho
   set OutputArray jets
-  set JetPTMin 10.0
+  set JetPTMin 20.0
 }
 
 
@@ -989,8 +920,7 @@ module Isolation PhotonIsolation {
 
   set PTMin 1.0
 
-  set PTRatioMax 0.4
-
+  set PTRatioMax 9999.
 }
 
 #####################
@@ -1027,6 +957,7 @@ module Efficiency ElectronEfficiency {
                          (abs(eta) >= 2.0 && abs(eta) <= 2.5 ) * (pt > 50.0 && pt <= 70.0)  * (0.85) + \          
                          (abs(eta) >= 2.0 && abs(eta) <= 2.5 ) * (pt > 70.0 )  * (0.85) + \                                                                                                              
 	(abs(eta) > 2.5)                              * (0.00)}
+
 }
 
 ####################
@@ -1044,7 +975,7 @@ module Isolation ElectronIsolation {
 
   set PTMin 1.0
 
-  set PTRatioMax 0.4
+  set PTRatioMax 9999.
 }
 
 #################
@@ -1066,6 +997,7 @@ module Efficiency MuonEfficiency {
                          (abs(eta) <= 2.40) * (pt >  50. && pt <= 70.)  * (0.98) + \                      
                          (abs(eta) <= 2.40) * (pt > 70.0 )  * (1.00) + \   
 	(abs(eta) > 2.40)  * (0.00)}
+
 }
 
 ################
@@ -1083,7 +1015,7 @@ module Isolation MuonIsolation {
 
   set PTMin 1.0
 
-  set PTRatioMax 0.4
+  set PTRatioMax 9999.
 }
 
 ###################
@@ -1107,7 +1039,6 @@ module Merger PuppiMissingET {
   set MomentumOutputArray momentum
 }
 
-
 ##################
 # Scalar HT merger
 ##################
@@ -1117,6 +1048,10 @@ module Merger ScalarHT {
   add InputArray UniqueObjectFinderEJ/electrons
   add InputArray UniqueObjectFinderGJ/photons
   add InputArray UniqueObjectFinderMJ/muons
+#  add InputArray JetPileUpSubtractor/jets
+#  add InputArray ElectronIsolation/electrons
+#  add InputArray PhotonIsolation/photons
+#  add InputArray MuonIsolation/muons
   set EnergyOutputArray energy
 }
 
@@ -1131,7 +1066,7 @@ module BTagging BTagging {
   set JetInputArray JetPileUpSubtractor/jets
 
   set BitNumber 0
-  set DeltaR 0.5
+  set DeltaR 0.4
   set PartonPTMin 1.0
   set PartonEtaMax 2.5
 
@@ -1162,7 +1097,7 @@ module BTagging BTaggingLoose {
   set JetInputArray JetPileUpSubtractor/jets
 
   set BitNumber 1
-  set DeltaR 0.5
+  set DeltaR 0.4
   set PartonPTMin 1.0
   set PartonEtaMax 2.5
 
@@ -1181,10 +1116,12 @@ module BTagging BTaggingLoose {
                               (abs(eta) > 2.5)                                  * (0.000)}
 
   # efficiency formula for b-jets
+
     add EfficiencyFormula {5} {                                      (pt <= 15.0) * (0.000) + \
                                                 (abs(eta) <= 1.2) * (pt > 15.0) * (0.629858*tanh(pt*0.0166188 + 0.300119)) + \
                               (abs(eta) > 1.2 && abs(eta) <= 2.5) * (pt > 15.0) * (0.584522*tanh(pt*0.0144387 + 0.397034)) + \
 									 (abs(eta) > 2.5)                                  * (0.000)}
+
 }
 
 ##########################
@@ -1216,8 +1153,10 @@ module IsoTrackFilter IsoTrackFilter {
 
   set OutputArray IsoTrack
 
+  ### Cone 0.3
   set DeltaRMax 0.3
 
+  ## PTmin of isolation 
   set PTMin 1
 
   set PTRatioMax 0.2
@@ -1225,14 +1164,13 @@ module IsoTrackFilter IsoTrackFilter {
   set IsoTrackPTMin 5
 }
 
-
 module TauTagging TauTagging {
   set ParticleInputArray Delphes/allParticles
   set PartonInputArray Delphes/partons
 #  set JetInputArray FastJetFinder/jets
   set JetInputArray JetPileUpSubtractor/jets
 
-  set DeltaR 0.5
+  set DeltaR 0.4
 
   set TauPTMin 1.0
 
@@ -1273,7 +1211,7 @@ module UniqueObjectFinder UniqueObjectFinderMJ {
    add InputArray UniqueObjectFinderEJ/jets jets
 }
 
-###
+### 
 #Pileup jet id
 ###
 
@@ -1282,25 +1220,29 @@ module PileUpJetID PileUpJetID {
   set OutputArray jets
   set NeutralsInPassingJets eflowTowers
 
-  # Using constituents does not make sense with Charged hadron subtraction
-
-  # In 0 mode, dR cut used instead
-  
+  # Using constituents does not make sense with Charged hadron subtraction                                                                                                           
+  # In 0 mode, dR cut used instead                                                                                                                                                   
   set UseConstituents 0
-  
+
   set TrackInputArray Calorimeter/eflowTracks
   set NeutralInputArray Calorimeter/eflowTowers
   set ParameterR 0.4
-  
+
   set JetPTMin 5.0
-  
-  set MeanSqDeltaRMaxBarrel 0.13
-  set BetaMinBarrel 0.16
-  set MeanSqDeltaRMaxEndcap 0.07
-  set BetaMinEndcap 0.06
+
+#  set MeanSqDeltaRMaxBarrel 0.13
+#  set BetaMinBarrel 0.16
+#  set MeanSqDeltaRMaxEndcap 0.07
+#  set BetaMinEndcap 0.06
+    set MeanSqDeltaRMaxBarrel 0.07
+    set BetaMinBarrel 0.13
+    set MeanSqDeltaRMaxEndcap 0.07
+    set BetaMinEndcap 0.15
   set MeanSqDeltaRMaxForward 0.01
 
 }
+
+
 
 ##################
 # ROOT tree writer
@@ -1315,16 +1257,20 @@ module TreeWriter TreeWriter {
 
   add Branch GenJetFinder/jets GenJetWithNu Jet
   add Branch GenJetFinderNoNu/jets GenJet Jet
-  add Branch UniqueObjectFinderMJ/jets Jet Jet
-  add Branch UniqueObjectFinderEJ/electrons Electron Electron
-  add Branch UniqueObjectFinderGJ/photons Photon Photon
-  add Branch UniqueObjectFinderMJ/muons Muon Muon
+#  add Branch UniqueObjectFinderMJ/jets Jet Jet
+#  add Branch UniqueObjectFinderEJ/electrons Electron Electron
+#  add Branch UniqueObjectFinderGJ/photons Photon Photon
+#  add Branch UniqueObjectFinderMJ/muons Muon Muon
+  add Branch JetPileUpSubtractor/jets Jet Jet
+  add Branch ElectronIsolation/electrons Electron Electron
+  add Branch PhotonIsolation/photons Photon Photon
+  add Branch MuonIsolation/muons Muon Muon
 
   add Branch PileUpJetIDMissingET/momentum PileUpJetIDMissingET MissingET
   add Branch GenMissingET/momentum GenMissingET MissingET
   add Branch PuppiMissingET/momentum PuppiMissingET MissingET
 
-  
+
   add Branch MissingET/momentum MissingET MissingET
   add Branch ScalarHT/energy ScalarHT ScalarHT
   add Branch Rho/rho Rho Rho
@@ -1335,4 +1281,33 @@ module TreeWriter TreeWriter {
   add Branch PuppiJetFinder/jets PuppiJet Jet
 
   set OffsetFromModifyBeamSpot 0
+
+#  add Branch RunPUPPI/weightedparticles PuppiWeightedParticles GenParticle
+#  add Branch Delphes/allParticles Particle GenParticle
+#  add Branch Calorimeter/eflowTracks EFlowTrack Track
+#  add Branch Calorimeter/eflowTowers EFlowTower Tower
+#  add Branch MuonMomentumSmearing/muons EFlowMuon Muon
+#  add Branch PuppiJetPileUpSubtractor/jets SubtractedPuppiJet Jet
+#  add Branch PuppiRho/rho PuppiRho Rho
 }
+
+# # add Branch InputArray BranchName BranchClass
+#  # add Branch Delphes/allParticles Particle GenParticle
+  # add Branch StatusPid/filteredParticles Particle GenParticle
+#  # add Branch TrackMerger/tracks Track Track
+#  # add Branch Calorimeter/towers Tower Tower
+#  # add Branch ConstituentFilter/eflowTracks EFlowTrack Track
+#  # add Branch ConstituentFilter/eflowTowers EFlowTower Tower
+#  # add Branch ConstituentFilter/muons EFlowMuon Muon
+  # add Branch GenJetFinder/jets GenJet Jet
+  # add Branch CAJetPileUpSubtractor/jets CAJet Jet
+  # add Branch UniqueObjectFinderMJ/jets Jet Jet
+  # add Branch UniqueObjectFinderEJ/electrons Electron Electron
+  # add Branch UniqueObjectFinderGJ/photons Photon Photon
+  # add Branch UniqueObjectFinderMJ/muons Muon Muon
+  # add Branch MissingET/momentum MissingET MissingET
+  # add Branch ScalarHT/energy ScalarHT ScalarHT
+  # add Branch Rho/rho Rho ScalarHT
+
+
+

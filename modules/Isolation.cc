@@ -67,8 +67,8 @@ Int_t IsolationClassifier::GetCategory(TObject *object)
 //------------------------------------------------------------------------------
 
 Isolation::Isolation() :
-  fClassifier(0), fFilter(0),
-  fItIsolationInputArray(0), fItCandidateInputArray(0),
+  fClassifier(0), fNeutralFilter(0), fChargedFilter(0),
+  fItNeutralIsolationInputArray(0), fItChargedIsolationInputArray(0), fItCandidateInputArray(0),
   fItRhoInputArray(0)
 {
   fClassifier = new IsolationClassifier;
@@ -98,10 +98,15 @@ void Isolation::Init()
 
   // import input array(s)
 
-  fIsolationInputArray = ImportArray(GetString("IsolationInputArray", "Delphes/partons"));
-  fItIsolationInputArray = fIsolationInputArray->MakeIterator();
+  fNeutralIsolationInputArray = ImportArray(GetString("NeutralIsolationInputArray", "Calorimeter/eflowTowers"));
+  fItNeutralIsolationInputArray = fNeutralIsolationInputArray->MakeIterator();
 
-  fFilter = new ExRootFilter(fIsolationInputArray);
+  fNeutralFilter = new ExRootFilter(fNeutralIsolationInputArray);
+
+  fChargedIsolationInputArray = ImportArray(GetString("ChargedIsolationInputArray", "TrackPileUpSubtractor/eflowTracks"));
+  fItChargedIsolationInputArray = fChargedIsolationInputArray->MakeIterator();
+
+  fChargedFilter = new ExRootFilter(fChargedIsolationInputArray);
 
   fCandidateInputArray = ImportArray(GetString("CandidateInputArray", "Calorimeter/electrons"));
   fItCandidateInputArray = fCandidateInputArray->MakeIterator();
@@ -127,9 +132,11 @@ void Isolation::Init()
 void Isolation::Finish()
 {
   if(fItRhoInputArray) delete fItRhoInputArray;
-  if(fFilter) delete fFilter;
+  if(fNeutralFilter) delete fNeutralFilter;
+  if(fChargedFilter) delete fChargedFilter;
   if(fItCandidateInputArray) delete fItCandidateInputArray;
-  if(fItIsolationInputArray) delete fItIsolationInputArray;
+  if(fItChargedIsolationInputArray) delete fItChargedIsolationInputArray;
+  if(fItNeutralIsolationInputArray) delete fItNeutralIsolationInputArray;
 }
 
 //------------------------------------------------------------------------------
@@ -137,8 +144,9 @@ void Isolation::Finish()
 void Isolation::Process()
 {
   Candidate *candidate, *isolation, *object;
-  TObjArray *isolationArray;
-  Double_t sum, ratio;
+  TObjArray *chargedIsolationArray;
+  TObjArray *neutralIsolationArray;
+  Double_t sumCharged, sumNeutral, sum, ratio;
   Int_t counter;
   Double_t eta = 0.0;
   Double_t rho = 0.0;
@@ -149,13 +157,18 @@ void Isolation::Process()
     rho = candidate->Momentum.Pt();
   }
 
-  // select isolation objects
-  fFilter->Reset();
-  isolationArray = fFilter->GetSubArray(fClassifier, 0);
+  // select charged isolation objects
+  fChargedFilter->Reset();
+  chargedIsolationArray = fChargedFilter->GetSubArray(fClassifier, 0);
 
-  if(isolationArray == 0) return;
+  // select charged isolation objects
+  fNeutralFilter->Reset();
+  neutralIsolationArray = fNeutralFilter->GetSubArray(fClassifier, 0);
 
-  TIter itIsolationArray(isolationArray);
+  if(chargedIsolationArray == 0 || neutralIsolationArray == 0) return;
+
+  TIter itChargedIsolationArray(chargedIsolationArray);
+  TIter itNeutralIsolationArray(neutralIsolationArray);
 
   // loop over all input jets
   fItCandidateInputArray->Reset();
@@ -165,17 +178,33 @@ void Isolation::Process()
     eta = TMath::Abs(candidateMomentum.Eta());
 
     // loop over all input tracks
-    sum = 0.0;
+    sumCharged = 0.0;
     counter = 0;
-    itIsolationArray.Reset();
-    while((isolation = static_cast<Candidate*>(itIsolationArray.Next())))
+    itChargedIsolationArray.Reset();
+    while((isolation = static_cast<Candidate*>(itChargedIsolationArray.Next())))
     {
       const TLorentzVector &isolationMomentum = isolation->Momentum;
 
       if(candidateMomentum.DeltaR(isolationMomentum) <= fDeltaRMax &&
          !candidate->Overlaps(isolation))
       {
-        sum += isolationMomentum.Pt();
+        sumCharged += isolationMomentum.Pt();
+        ++counter;
+      }
+    }
+
+    // loop over all input towers
+    sumNeutral = 0.0;
+    counter = 0;
+    itNeutralIsolationArray.Reset();
+    while((isolation = static_cast<Candidate*>(itNeutralIsolationArray.Next())))
+    {
+      const TLorentzVector &isolationMomentum = isolation->Momentum;
+
+      if(candidateMomentum.DeltaR(isolationMomentum) <= fDeltaRMax &&
+         !candidate->Overlaps(isolation))
+      {
+        sumNeutral += isolationMomentum.Pt();
         ++counter;
       }
     }
@@ -195,7 +224,7 @@ void Isolation::Process()
     }
 
     // correct sum for pile-up contamination
-    sum = sum - rho*fDeltaRMax*fDeltaRMax*TMath::Pi();
+    sum = sumCharged + TMath::Max(sumNeutral - TMath::Max(rho,0.0)*fDeltaRMax*fDeltaRMax*TMath::Pi(),0.0);
 
     ratio = sum/candidateMomentum.Pt();
 
