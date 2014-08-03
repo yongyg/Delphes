@@ -47,18 +47,28 @@ using namespace std;
 void ConvertInput(fwlite::Event &event, Long64_t eventCounter, ExRootTreeBranch *branch, DelphesFactory *factory, TObjArray *allParticleOutputArray, TObjArray *stableParticleOutputArray, TObjArray *partonOutputArray)
 {
     LHEFEvent *lheEvt;
-
-    fwlite::Handle<LHEEventProduct> lheEvtInfo;
-    lheEvtInfo.getByLabel(event, "source");
-
     lheEvt = static_cast<LHEFEvent *>(branch->NewEntry());
 
-    lheEvt->Number = eventCounter;
-    lheEvt->Weight = lheEvtInfo->originalXWGTUP();
-    lheEvt->ProcessID = ((lhef::HEPEUP)lheEvtInfo->hepeup()).IDPRUP;
-    lheEvt->ScalePDF = ((lhef::HEPEUP)lheEvtInfo->hepeup()).IDPRUP;
-    lheEvt->AlphaQED = ((lhef::HEPEUP)lheEvtInfo->hepeup()).SCALUP;
-    lheEvt->AlphaQCD = ((lhef::HEPEUP)lheEvtInfo->hepeup()).AQCDUP;
+    fwlite::Handle<LHEEventProduct> lheEvtInfo;
+
+    lheEvtInfo.getByLabel(event, "source");
+
+    if (lheEvtInfo.isValid()) {
+      lheEvt->Number = eventCounter;
+      lheEvt->Weight = lheEvtInfo->originalXWGTUP();
+      lheEvt->ProcessID = ((lhef::HEPEUP)lheEvtInfo->hepeup()).IDPRUP;
+      lheEvt->ScalePDF = ((lhef::HEPEUP)lheEvtInfo->hepeup()).IDPRUP;
+      lheEvt->AlphaQED = ((lhef::HEPEUP)lheEvtInfo->hepeup()).SCALUP;
+      lheEvt->AlphaQCD = ((lhef::HEPEUP)lheEvtInfo->hepeup()).AQCDUP;
+    }
+    else {
+      lheEvt->Number = 0;
+      lheEvt->Weight = 1;
+      lheEvt->ProcessID = 0;
+      lheEvt->ScalePDF = 0;
+      lheEvt->AlphaQED = 0;
+      lheEvt->AlphaQCD = 0;
+    }
 
     fwlite::Handle< vector< reco::GenParticle > > handleParticle;
     vector< reco::GenParticle >::const_iterator itParticle;
