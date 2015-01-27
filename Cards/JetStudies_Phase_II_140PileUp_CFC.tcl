@@ -197,7 +197,7 @@ module StatusPidFilter StatusPid {
     set InputArray Delphes/allParticles
     set OutputArray filteredParticles
 
-    set PTMin 0.5
+    set PTMin 1.0
 }
 
 #######################
@@ -945,7 +945,7 @@ module TreeWriter TreeWriter {
   add Branch Rho/rho Rho Rho
   add Branch PileUpMerger/NPU NPU ScalarHT
 
-  set OffsetFromModifyBeamSpot 1
+  set OffsetFromModifyBeamSpot 0
 
   add Branch RunPUPPI/weightedparticles PuppiWeightedParticles GenParticle
   add Branch Delphes/allParticles Particle GenParticle
