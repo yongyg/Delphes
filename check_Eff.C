@@ -1,7 +1,4 @@
-
-
-
-#include "examples/otheader.h"
+#include "examples/rootheader.h"
 
 #include "examples/plot_histos.cc"
 
